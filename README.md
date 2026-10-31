@@ -60,3 +60,17 @@ Festgelegter SHA-256-Fingerabdruck des Release-Zertifikats:
 `2d577e2d58f8b6b19c82b8b90bfe60307d6e0fdc8cd853f518c563930361aadc`
 
 Der private Eigentümer-Speicher enthält das Backup; es gehört nicht zum Projektarchiv. Ausgelieferte APKs müssen mit `apksigner verify --verbose --print-certs` auf diesen Fingerabdruck geprüft werden. Die Installation und die OCR sind zusätzlich auf einem echten Gerät zu prüfen.
+
+## Version 0.4.0: automatische Tipico-Verbindung
+
+Der öffentliche Tipico-Webclient referenziert den lesenden Programm-Endpunkt
+`https://sports.tipico.de/v1/tpapi/programgateway/program/events/hourEvents/48?language=de&maxMarkets=1&selectedSports=...`.
+Am 31.10.2026 lieferte dieser ohne Cookies, Anmeldung oder API-Schlüssel HTTP 200 und strukturierte aktuelle Vorab-Quoten für `soccer`, `basketball` und `football`. Kleine echte Antwortausschnitte liegen als Parser-Testfixtures im Repository. Kein Code des Tipico-Webclients wird ausgeführt oder gebündelt.
+
+Android fragt ausschließlich diesen fest vorgegebenen HTTPS-Endpunkt ab; freigegebene Sportnamen: soccer, basketball, football, baseball, tennis. Keine frei wählbaren URLs, keine Weiterleitungen, keine Zugangsdaten und keine Wettabgabe. Größen- und Zeitlimits, 30 Sekunden Cache und eine begrenzte Übertragung an das lokale WebView. Öffentliche Website-Schnittstelle, kein vertraglich zugesicherter oder offizieller Partnerzugang. Änderungen oder Sperren führen zu sichtbaren Fehlern; es wird nichts umgangen.
+
+Automatischer Abruf nach der ESPN-Analyse, nach Kombi-Übernahme, beim Öffnen einer vorbereiteten Kombi im Demokonto und alle 60 Sekunden bei sichtbarer entsprechender App-Seite. Abrufzeit anzeigen; bei automatischen Demopreisen älter als 90 Sekunden vor Start aktualisieren. Bereits gestartete Demotests behalten ihre eingefrorenen Preise. Nur bevorstehende Spiele der nächsten 48 Stunden; keine In-Play-Siegerprognosen.
+
+Matching benötigt beide Teilnehmernamen (nur wenige explizite Aliasnamen, kein unscharfes Raten), höchstens zwei Minuten Zeitabweichung, eindeutiges Ereignis, Zustand `pre_match` und genau einen vollständigen Standard-Siegermarkt ohne Abschnitt oder Handicap. Fußball: 1/X/2; Basketball, NFL, MLB, Tennis: 1/2. Marktregeln werden vor Teststart bestätigt. NHL bleibt automatisch ausgeschlossen, damit Dreiweg-60-Minuten-Quoten nicht mit dem ESPN-Tipp inklusive Overtime vermischt werden. Tatsächlich fehlende, gesperrte oder unklare Preise werden nicht erfunden. Nur für NBA, NFL und Fußball wurde der echte öffentliche Abruf hier verifiziert; MLB/Tennis müssen bei vorhandenen kommenden Spielen zusätzlich geprüft werden.
+
+Direkter Zugriff läuft nativ unter Android. Die statische Website zeigt dafür bewusst keine vorgetäuschte Verbindung; dort bleiben manuelle/Screenshot-Textimporte verfügbar. Ein echter Android-Gerätetest steht aus.

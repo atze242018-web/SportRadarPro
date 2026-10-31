@@ -25,6 +25,18 @@ import android.widget.Toast;
 import androidx.webkit.WebViewAssetLoader;
 import androidx.webkit.WebViewClientCompat;
 import java.io.OutputStream;
+import java.io.InputStream;
+import java.io.ByteArrayOutputStream;
+import java.net.HttpURLConnection;
+import java.net.URL;
+import java.util.Set;
+import java.util.Map;
+import java.util.Iterator;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.nio.charset.StandardCharsets;
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -39,6 +51,62 @@ public class MainActivity extends Activity {
     private String exportText;
     private TextRecognizer quoteRecognizer;
     private boolean quoteBusy;
+    private final ExecutorService tipicoExecutor = Executors.newFixedThreadPool(2);
+    private final Map<String, String> tipicoCache = new ConcurrentHashMap<>();
+    private final Map<String, Long> tipicoCacheTime = new ConcurrentHashMap<>();
+    private final Set<String> tipicoRunning = ConcurrentHashMap.newKeySet();
+    private final Set<String> tipicoSports = new HashSet<>(Arrays.asList("soccer", "basketball", "football", "baseball", "tennis"));
+    private void tipicoEvent(String requestId, String sport) {
+        JSONObject payload = new JSONObject();
+        HttpURLConnection connection = null;
+        try {
+            payload.put("requestId", requestId);
+            long fetched = tipicoCacheTime.getOrDefault(sport, 0L);
+            String raw = tipicoCache.get(sport);
+            if (raw == null || System.currentTimeMillis() - fetched >= 30_000) {
+                URL url = new URL("https://sports.tipico.de/v1/tpapi/programgateway/program/events/hourEvents/48?language=de&maxMarkets=1&selectedSports=" + sport);
+                connection = (HttpURLConnection) url.openConnection();
+                connection.setInstanceFollowRedirects(false);
+                connection.setRequestMethod("GET"); connection.setConnectTimeout(8000); connection.setReadTimeout(12000);
+                connection.setUseCaches(false); connection.setRequestProperty("Accept", "application/json");
+                int status = connection.getResponseCode();
+                if (status != 200) throw new IllegalStateException("Tipico antwortet mit HTTP " + status + ". Keine Quoten übernommen.");
+                String type = connection.getContentType();
+                if (type == null || !type.toLowerCase(java.util.Locale.ROOT).contains("json")) throw new IllegalStateException("Tipico liefert keine Quotendaten.");
+                try (InputStream in = connection.getInputStream(); ByteArrayOutputStream out = new ByteArrayOutputStream()) {
+                    byte[] buffer = new byte[8192]; int n;
+                    while ((n = in.read(buffer)) != -1) {
+                        if (out.size() + n > 4_000_000) throw new IllegalStateException("Tipico-Antwort zu groß.");
+                        out.write(buffer, 0, n);
+                    }
+                    JSONObject all = new JSONObject(out.toString("UTF-8"));
+                    JSONObject upcoming = all.getJSONObject("UPCOMING");
+                    JSONObject clean = new JSONObject();
+                    JSONObject events = upcoming.getJSONObject("events"), reduced = new JSONObject();
+                    Iterator<String> ids = events.keys();
+                    while (ids.hasNext()) {
+                        String id = ids.next(); JSONObject event = events.getJSONObject(id), fields = new JSONObject();
+                        for (String field : new String[]{"id", "team1", "team2", "status", "eventStartTime"}) fields.put(field, event.opt(field));
+                        reduced.put(id, fields);
+                    }
+                    clean.put("events", reduced);
+                    for (String field : new String[]{"matchOddGroups", "source", "live"}) clean.put(field, upcoming.get(field));
+                    raw = new JSONObject().put("UPCOMING", clean).toString();
+                    if (raw.length() > 400_000) throw new IllegalStateException("Tipico-Programm zu groß für die sichere App-Übertragung.");
+                }
+                fetched = System.currentTimeMillis(); tipicoCache.put(sport, raw); tipicoCacheTime.put(sport, fetched);
+            }
+            payload.put("data", new JSONObject(raw)); payload.put("fetchedAt", fetched);
+        } catch (Exception e) {
+            try { payload.put("error", e instanceof IllegalStateException ? e.getMessage() : "Tipico-Verbindung fehlgeschlagen. Bitte später erneut versuchen."); }
+            catch (Exception ignored) { }
+        } finally {
+            if (connection != null) connection.disconnect(); tipicoRunning.remove(sport);
+        }
+        runOnUiThread(() -> {
+            if (!isFinishing() && !isDestroyed() && local(web.getUrl())) web.evaluateJavascript("window.dispatchEvent(new CustomEvent('tipico-program',{detail:" + payload.toString() + "}));", null);
+        });
+    }
 
     private void quoteEvent(JSONObject payload) {
         if (isFinishing() || isDestroyed() || !local(web.getUrl())) return;
@@ -156,6 +224,13 @@ public class MainActivity extends Activity {
     private void toast(String message) { Toast.makeText(this, message, Toast.LENGTH_LONG).show(); }
 
     private final class ExportBridge {
+        @JavascriptInterface public void readTipicoProgram(String sport, String requestId) {
+            runOnUiThread(() -> {
+                if (!local(web.getUrl()) || sport == null || requestId == null || !tipicoSports.contains(sport)
+                        || !requestId.matches("[a-zA-Z0-9-]{1,64}") || !tipicoRunning.add(sport)) return;
+                tipicoExecutor.execute(() -> tipicoEvent(requestId, sport));
+            });
+        }
         @JavascriptInterface public void importTipicoScreenshot() {
             runOnUiThread(() -> {
                 if (!local(web.getUrl()) || quoteBusy) return;
@@ -208,6 +283,7 @@ public class MainActivity extends Activity {
     }
     @Override protected void onDestroy() {
         if (fileCallback != null) fileCallback.onReceiveValue(null);
+        tipicoExecutor.shutdownNow();
         if (quoteRecognizer != null) quoteRecognizer.close();
         web.removeJavascriptInterface("SportRadarAndroid");
         web.destroy();

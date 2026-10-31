@@ -1,0 +1,70 @@
+{
+  "UPCOMING": {
+    "source": "UPCOMING",
+    "live": false,
+    "events": {
+      "728500010": {
+        "betGeniusId": 13998849,
+        "betMarketsCount": 126,
+        "breakBefore": null,
+        "competitionId": 4301,
+        "currentServer": null,
+        "date": "Morgen",
+        "eventInfo": "Ligue 1 / Racing Straßburg - AJ Auxerre",
+        "eventName": "Racing Straßburg - AJ Auxerre",
+        "eventStartTime": 1793541600000,
+        "extraTime": false,
+        "extraTimeInfo": null,
+        "firstLegResult": null,
+        "hasFirstHalfResults": false,
+        "icon": "",
+        "id": "728500010",
+        "lSportId": null,
+        "liveOutright": false,
+        "midnightTime": 1793487600000,
+        "penalties": false,
+        "redCards": null,
+        "sportRadarMatchId": 72036270,
+        "status": "pre_match",
+        "team1": "Racing Straßburg",
+        "team1Id": 1659,
+        "team2": "AJ Auxerre",
+        "team2Id": 1646,
+        "type": "live"
+      }
+    },
+    "matchOddGroups": {
+      "728500010": {
+        "standard": [
+          {
+            "fixedParamText": null,
+            "halfTimeResult": null,
+            "id": 89291821510,
+            "originalMarketName": "standard",
+            "results": [
+              {
+                "caption": "1",
+                "choiceParam": "1",
+                "id": 240580221810,
+                "quoteFloatValue": 1.77
+              },
+              {
+                "caption": "X",
+                "choiceParam": "X",
+                "id": 240580221710,
+                "quoteFloatValue": 4.0
+              },
+              {
+                "caption": "2",
+                "choiceParam": "2",
+                "id": 240580221910,
+                "quoteFloatValue": 3.9
+              }
+            ],
+            "section": null
+          }
+        ]
+      }
+    }
+  }
+}

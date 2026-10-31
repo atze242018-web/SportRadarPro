@@ -1,0 +1,64 @@
+{
+  "UPCOMING": {
+    "source": "UPCOMING",
+    "live": false,
+    "events": {
+      "730080810": {
+        "betGeniusId": null,
+        "betMarketsCount": 72,
+        "breakBefore": null,
+        "competitionId": 177301,
+        "currentServer": null,
+        "date": "Morgen",
+        "eventInfo": "NBA / Memphis Grizzlies - Sacramento Kings",
+        "eventName": "Memphis Grizzlies - Sacramento Kings",
+        "eventStartTime": 1793491200000,
+        "extraTime": false,
+        "extraTimeInfo": null,
+        "firstLegResult": null,
+        "hasFirstHalfResults": false,
+        "icon": "",
+        "id": "730080810",
+        "lSportId": null,
+        "liveOutright": false,
+        "midnightTime": 1793487600000,
+        "penalties": false,
+        "redCards": null,
+        "sportRadarMatchId": 73719464,
+        "status": "pre_match",
+        "team1": "Memphis Grizzlies",
+        "team1Id": 3415,
+        "team2": "Sacramento Kings",
+        "team2Id": 3413,
+        "type": "live"
+      }
+    },
+    "matchOddGroups": {
+      "730080810": {
+        "standard": [
+          {
+            "fixedParamText": null,
+            "halfTimeResult": null,
+            "id": 89978983910,
+            "originalMarketName": "standard",
+            "results": [
+              {
+                "caption": "1",
+                "choiceParam": "1",
+                "id": 242370269810,
+                "quoteFloatValue": 1.25
+              },
+              {
+                "caption": "2",
+                "choiceParam": "2",
+                "id": 242370269710,
+                "quoteFloatValue": 3.8
+              }
+            ],
+            "section": null
+          }
+        ]
+      }
+    }
+  }
+}

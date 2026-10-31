@@ -1,0 +1,64 @@
+{
+  "UPCOMING": {
+    "source": "UPCOMING",
+    "live": false,
+    "events": {
+      "729404010": {
+        "betGeniusId": 13906372,
+        "betMarketsCount": 57,
+        "breakBefore": null,
+        "competitionId": 47301,
+        "currentServer": null,
+        "date": "Morgen",
+        "eventInfo": "NFL / Cincinnati Bengals - Tennessee Titans",
+        "eventName": "Cincinnati Bengals - Tennessee Titans",
+        "eventStartTime": 1793556000000,
+        "extraTime": false,
+        "extraTimeInfo": null,
+        "firstLegResult": null,
+        "hasFirstHalfResults": false,
+        "icon": "",
+        "id": "729404010",
+        "lSportId": null,
+        "liveOutright": false,
+        "midnightTime": 1793487600000,
+        "penalties": false,
+        "redCards": null,
+        "sportRadarMatchId": 71515956,
+        "status": "pre_match",
+        "team1": "Cincinnati Bengals",
+        "team1Id": 4416,
+        "team2": "Tennessee Titans",
+        "team2Id": 367364,
+        "type": "live"
+      }
+    },
+    "matchOddGroups": {
+      "729404010": {
+        "standard": [
+          {
+            "fixedParamText": null,
+            "halfTimeResult": null,
+            "id": 89695367510,
+            "originalMarketName": "standard",
+            "results": [
+              {
+                "caption": "1",
+                "choiceParam": "1",
+                "id": 241628902110,
+                "quoteFloatValue": 1.1
+              },
+              {
+                "caption": "2",
+                "choiceParam": "2",
+                "id": 241628902210,
+                "quoteFloatValue": 6.5
+              }
+            ],
+            "section": null
+          }
+        ]
+      }
+    }
+  }
+}
