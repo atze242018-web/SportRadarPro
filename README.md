@@ -17,7 +17,11 @@ Installierbare Android-Test-App mit lokal eingebautem SportRadar und 100 EUR vir
 3. Nach erfolgreichem Lauf unter **Artifacts → SportRadarPro-Android-APK** herunterladen und entpacken.
 4. `app-debug.apk` auf Android installieren. Android kann für den herunterladenden Browser die Berechtigung „Unbekannte Apps installieren“ verlangen.
 
-Diese Datei ist zunächst eine Debug-/Test-APK, kein Play-Store-Release. Der erste GitHub-Build steht noch aus. Eine vollständige Android-Kompilierung wurde in der Vorbereitungsumgebung mangels SDK nicht ausgeführt. Die Web- und Kontorechnungstests werden vor jedem APK-Build ausgeführt.
+Diese Datei ist zunächst eine Debug-/Test-APK, kein Play-Store-Release. Der erste GitHub-Build wurde am 31.10.2026 erfolgreich abgeschlossen: 27 Web-/Demokonto-Tests, Android-Kompilierung und Android Lint. Eine Installation auf einem echten Android-Gerät wurde hier noch nicht geprüft. Die Web- und Kontorechnungstests werden vor jedem APK-Build ausgeführt.
+
+Erfolgreicher Lauf: https://github.com/atze242018-web/SportRadarPro/actions/runs/41237271602
+
+Geprüfte weitere GitHub-Bausteine: [Recherche und Empfehlungen](docs/GitHub-Recherche-2026-10-31.md).
 
 ## Daten und Updates
 
