@@ -28,3 +28,9 @@
 }
 
 @media(max-width:800px){.page-intro>.button{font-size:11px;white-space:normal;max-width:45%}}
+
+.open-tickets{margin-bottom:32px;padding-bottom:24px;border-bottom:1px solid var(--line)}
+.open-tickets>.hint{margin:10px 0 16px}.open-totals{display:flex;flex-wrap:wrap;gap:12px 24px;padding:15px 18px;border:1px solid var(--line);background:var(--panel2);border-radius:12px}
+.open-totals span{color:var(--muted);font-size:12px}.open-totals b{display:block;color:var(--text);font-size:21px;margin-top:3px}.open-totals b.positive{color:var(--accent)}
+.open-ticket h3{font-size:18px;line-height:1.5}.open-ticket p{margin:12px 0}.open-money{display:grid;grid-template-columns:1fr;gap:10px;border-top:1px solid var(--line);padding-top:14px}.open-money div{display:flex;justify-content:space-between;gap:12px;align-items:center}.open-money span{color:var(--muted);font-size:12px}.open-money b{font-size:19px;white-space:nowrap}
+@media(max-width:800px){.open-totals{gap:12px 20px}.open-totals b{font-size:19px}.open-ticket{min-width:0}.open-ticket h3{overflow-wrap:anywhere}}
