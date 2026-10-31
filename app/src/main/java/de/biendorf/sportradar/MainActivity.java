@@ -4,6 +4,12 @@ import android.app.Activity;
 import android.content.ActivityNotFoundException;
 import android.content.Intent;
 import android.graphics.Color;
+import android.graphics.Rect;
+import com.google.mlkit.vision.common.InputImage;
+import com.google.mlkit.vision.text.Text;
+import com.google.mlkit.vision.text.TextRecognition;
+import com.google.mlkit.vision.text.TextRecognizer;
+import com.google.mlkit.vision.text.latin.TextRecognizerOptions;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
@@ -27,10 +33,49 @@ import org.json.JSONTokener;
 public class MainActivity extends Activity {
     private static final String HOST = "appassets.androidplatform.net";
     private static final String START = "https://" + HOST + "/assets/web/index.html";
-    private static final int EXPORT_JSON = 4101, PICK_JSON = 4102;
+    private static final int EXPORT_JSON = 4101, PICK_JSON = 4102, PICK_QUOTE_IMAGE = 4103;
     private WebView web;
     private ValueCallback<Uri[]> fileCallback;
     private String exportText;
+    private TextRecognizer quoteRecognizer;
+    private boolean quoteBusy;
+
+    private void quoteEvent(JSONObject payload) {
+        if (isFinishing() || isDestroyed() || !local(web.getUrl())) return;
+        web.evaluateJavascript("window.dispatchEvent(new CustomEvent('tipico-ocr',{detail:" + payload.toString() + "}));", null);
+    }
+    private void quoteError(String error) {
+        quoteBusy = false;
+        try { JSONObject payload = new JSONObject(); payload.put("error", error); quoteEvent(payload); }
+        catch (Exception ignored) { toast(error); }
+    }
+    private void readQuoteImage(Uri uri) {
+        try {
+            InputImage image = InputImage.fromFilePath(this, uri);
+            if ((long) image.getWidth() * image.getHeight() > 24_000_000L) {
+                quoteError("Bild zu groß. Bitte einen normalen Screenshot auswählen."); return;
+            }
+            if (quoteRecognizer == null) quoteRecognizer = TextRecognition.getClient(TextRecognizerOptions.DEFAULT_OPTIONS);
+            quoteRecognizer.process(image).addOnSuccessListener(result -> {
+                quoteBusy = false;
+                try {
+                    JSONObject payload = new JSONObject();
+                    String raw = result.getText();
+                    if (raw.length() > 60_000) { quoteError("Zu viel Text. Bitte den Wettschein enger zuschneiden."); return; }
+                    payload.put("text", raw);
+                    JSONArray lines = new JSONArray();
+                    for (Text.TextBlock block : result.getTextBlocks()) for (Text.Line line : block.getLines()) {
+                        Rect box = line.getBoundingBox();
+                        if (box == null || lines.length() >= 3000) continue;
+                        JSONObject item = new JSONObject();
+                        item.put("text", line.getText()); item.put("x", box.left); item.put("y", box.top);
+                        item.put("w", box.width()); item.put("h", box.height()); lines.put(item);
+                    }
+                    payload.put("lines", lines); quoteEvent(payload);
+                } catch (Exception e) { quoteError("Bildtext konnte nicht verarbeitet werden."); }
+            }).addOnFailureListener(error -> quoteError("Screenshot konnte nicht gelesen werden. Bitte ein scharfes Bild auswählen."));
+        } catch (Exception e) { quoteError("Bild konnte nicht geöffnet werden."); }
+    }
 
     private boolean local(String url) {
         if (url == null) return false;
@@ -58,6 +103,9 @@ public class MainActivity extends Activity {
         WebSettings settings = web.getSettings();
         settings.setJavaScriptEnabled(true);
         settings.setDomStorageEnabled(true);
+        settings.setUseWideViewPort(true);
+        settings.setLoadWithOverviewMode(true);
+        settings.setTextZoom(100);
         settings.setAllowFileAccess(false);
         settings.setAllowContentAccess(true);
         settings.setMixedContentMode(WebSettings.MIXED_CONTENT_NEVER_ALLOW);
@@ -108,6 +156,16 @@ public class MainActivity extends Activity {
     private void toast(String message) { Toast.makeText(this, message, Toast.LENGTH_LONG).show(); }
 
     private final class ExportBridge {
+        @JavascriptInterface public void importTipicoScreenshot() {
+            runOnUiThread(() -> {
+                if (!local(web.getUrl()) || quoteBusy) return;
+                quoteBusy = true;
+                Intent pick = new Intent(Intent.ACTION_GET_CONTENT);
+                pick.setType("image/*"); pick.addCategory(Intent.CATEGORY_OPENABLE);
+                try { startActivityForResult(pick, PICK_QUOTE_IMAGE); }
+                catch (ActivityNotFoundException e) { quoteError("Keine Bildauswahl verfügbar."); }
+            });
+        }
         @JavascriptInterface public void exportJson(String filename, String text) {
             runOnUiThread(() -> {
                 if (!local(web.getUrl()) || text == null || text.length() > 5_000_000) return;
@@ -129,6 +187,10 @@ public class MainActivity extends Activity {
     }
     @SuppressWarnings("deprecation") @Override protected void onActivityResult(int request, int result, Intent data) {
         super.onActivityResult(request, result, data);
+        if (request == PICK_QUOTE_IMAGE) {
+            if (result == RESULT_OK && data != null && data.getData() != null) readQuoteImage(data.getData());
+            else quoteError("Screenshot-Auswahl abgebrochen.");
+        }
         if (request == PICK_JSON && fileCallback != null) {
             fileCallback.onReceiveValue(result == RESULT_OK && data != null && data.getData() != null ? new Uri[]{data.getData()} : null);
             fileCallback = null;
@@ -146,6 +208,7 @@ public class MainActivity extends Activity {
     }
     @Override protected void onDestroy() {
         if (fileCallback != null) fileCallback.onReceiveValue(null);
+        if (quoteRecognizer != null) quoteRecognizer.close();
         web.removeJavascriptInterface("SportRadarAndroid");
         web.destroy();
         super.onDestroy();

@@ -45,3 +45,18 @@ Mit `node --test tests/*.mjs` lassen sich die Web- und Demokonto-Tests separat a
 ### Quellenrecherche (31.10.2026)
 
 [The Hammer / Rob Pizzola](https://thehammer.bet/watch/what-is-closing-line-value-w-rob-pizzola) beschreibt ein YouTube-Video über Closing Line Value. Es wurde die Herausgeberseite geprüft, kein vollständiges Video-Transkript ausgewertet. [TikTok](https://newsroom.tiktok.com/how-to-tell-if-an-account-is-verified-on-tiktok?lang=en) erklärt, dass Verifizierung die Identität bestätigt; kein Leistungsnachweis. Keine vollständige unabhängig verifizierte und für unsere Märkte nachweislich profitable Influencer-Tippserie wurde gefunden oder als Prognosequelle eingebaut. [penaltyblog](https://github.com/martineastwood/penaltyblog) liefert Anregungen zu probabilistischen Modellen und Bewertungsmethoden; dessen Python-Code wird nicht gebündelt. Aktuelle Spielprognosen stammen weiter aus gelieferten ESPN-Modellzahlen. Treffersteigerung und Profitabilität sind bisher unbewiesen.
+
+## Version 0.3.0
+
+- Android: Tipico-Wettschein-Screenshots auswählen und mit gebündeltem ML Kit auf dem Gerät lesen. Nur eindeutige Zeilen `Tipp: Teamname` mit genau einer Einzelquote werden der vorbereiteten Kombi zugeordnet. Keine automatische Anmeldung, kein Zugriff auf andere Apps und kein Live-Quotenfeed. Generische Marktübersichten, abgeschnittene Namen und mehrdeutige Quoten bleiben zur manuellen Prüfung offen. Auch importierte Preise müssen nach Prüfung von Partie, Screenshot-Alter und Marktregeln bestätigt werden.
+- Mobile Navigation: fünf stets sichtbare Schaltflächen (Meine Tipps, Demokonto, KI & Qualität, Kombi-Radar, Mehr); weitere Bereiche im Menü. Nur der Inhaltsbereich scrollt.
+- **Signaturkorrektur:** v0.1 und v0.2 hatten unterschiedliche, flüchtige Debug-Zertifikate. Die ausgelieferten APKs werden ab v0.3 mit einer dauerhaft privat gesicherten Release-Identität signiert. Der Wechsel von der alten Debug-App erfordert einmalig Export, Deinstallation, Installation und Import. Danach dieselbe signierte App regulär aktualisieren.
+
+### Release-Signatur
+
+CI erzeugt ausschließlich `app-release-unsigned.apk` und kennzeichnet das Artefakt deutlich als nicht installierbar. Es darf nicht als Nutzer-Download verteilt werden. `scripts/sign-apk.py` signiert es mit dem **bereits vorhandenen** privaten Eigentümer-Backup `SportRadarPro_signing_backup.json` und offiziellen Android-Build-Tools. Backup und Passwort niemals ins öffentliche Repository, in Logs oder CI-Artefakte kopieren. Bei künftigen Releases dieses Backup wiederverwenden, keinen neuen Schlüssel erzeugen. Neue Versionsnummern müssen steigen.
+
+Festgelegter SHA-256-Fingerabdruck des Release-Zertifikats:
+`2d577e2d58f8b6b19c82b8b90bfe60307d6e0fdc8cd853f518c563930361aadc`
+
+Der private Eigentümer-Speicher enthält das Backup; es gehört nicht zum Projektarchiv. Ausgelieferte APKs müssen mit `apksigner verify --verbose --print-certs` auf diesen Fingerabdruck geprüft werden. Die Installation und die OCR sind zusätzlich auf einem echten Gerät zu prüfen.

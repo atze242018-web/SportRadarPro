@@ -29,12 +29,12 @@ jobs:
           cmdline-tools-version: '12266719'
       - name: Android SDK bereitstellen
         run: sdkmanager 'platforms;android-35' 'build-tools;35.0.0'
-      - name: Installierbare Test-APK bauen
-        run: gradle --no-daemon :app:assembleDebug :app:lintDebug
+      - name: Unsignierte Release-APK bauen und prüfen
+        run: gradle --no-daemon :app:assembleRelease :app:lintRelease
       - uses: actions/upload-artifact@v4
         with:
-          name: SportRadarPro-Android-APK
-          path: app/build/outputs/apk/debug/app-debug.apk
+          name: SportRadarPro-UNSIGNED-nicht-installieren
+          path: app/build/outputs/apk/release/app-release-unsigned.apk
           if-no-files-found: error
           retention-days: 30
       - uses: actions/upload-artifact@v4
