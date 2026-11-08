@@ -34,6 +34,7 @@ public class MainActivity extends Activity {
  @Override public void onCreate(Bundle saved){super.onCreate(saved);prefs=getSharedPreferences("connection",MODE_PRIVATE);
  container=new LinearLayout(this);container.setOrientation(LinearLayout.VERTICAL);container.setBackgroundColor(Color.rgb(13,23,39));
  container.setOnApplyWindowInsetsListener((v,insets)->{android.graphics.Insets i=insets.getInsets(WindowInsets.Type.systemBars()|WindowInsets.Type.ime());v.setPadding(i.left,i.top,i.right,i.bottom);return insets;});
+ container.setImportantForAutofill(View.IMPORTANT_FOR_AUTOFILL_NO_EXCLUDE_DESCENDANTS);
  setContentView(container);container.requestApplyInsets();
  LinearLayout toolbar=new LinearLayout(this);Button reload=new Button(this);reload.setText("Neu laden");reload.setOnClickListener(v->open());Button settings=new Button(this);settings.setText("Verbindung");settings.setOnClickListener(v->settings());toolbar.addView(reload);toolbar.addView(settings);container.addView(toolbar);
  status=text("SportRadar Mobil",12);status.setPadding(dp(12),0,dp(12),dp(4));container.addView(status);
@@ -70,11 +71,20 @@ public class MainActivity extends Activity {
   web.setWebViewClient(new WebViewClient(){
    @Override public boolean shouldOverrideUrlLoading(WebView v,WebResourceRequest r){if(internal(r.getUrl()))return false;status.setText("Externer Link bleibt in dieser App gesperrt.");return true;}
    @Override public WebResourceResponse shouldInterceptRequest(WebView v,WebResourceRequest r){if(internal(r.getUrl()))return null;return new WebResourceResponse("text/plain","UTF-8",new java.io.ByteArrayInputStream(new byte[0]));}
-   @Override public void onPageFinished(WebView v,String url){if(!internal(Uri.parse(url)))return;CookieManager.getInstance().flush();if("/pair".equals(Uri.parse(url).getPath())){if(!attempted){attempted=true;try{String c=savedCode();if(c.matches("[0-9]{8}")){status.setText("Gespeicherte Kopplung wird verwendet …");v.postUrl(base+"/pair",("code="+c).getBytes(StandardCharsets.UTF_8));return;}}catch(Exception e){status.setText("Gespeicherten Code bitte unter Verbindung erneuern.");return;}}
+   @Override public void onPageFinished(WebView v,String url){if(!internal(Uri.parse(url)))return;CookieManager.getInstance().flush();if("/pair".equals(Uri.parse(url).getPath())){if(!attempted){attempted=true;try{String c=savedCode();if(c.matches("[0-9]{8}")){status.setText("Gespeicherte Kopplung wird verwendet …");pairSavedCode(v,c);return;}}catch(Exception e){status.setText("Gespeicherten Code bitte unter Verbindung erneuern.");return;}}
     status.setText("Kopplung nicht bestätigt. Code unter Verbindung prüfen.");
    }else status.setText("SportRadar · Daten vom Laptop");}
    @Override public void onReceivedError(WebView v,WebResourceRequest r,WebResourceError e){if(r.isForMainFrame())status.setText("Laptop nicht erreichbar. WireGuard, Laptop und SportRadar prüfen. Dann Neu laden.");}
   });web.loadUrl(base+"/");
+ }
+ private void pairSavedCode(WebView target,String code){
+  final String origin=base;
+  new Thread(()->{try{
+   String cookie=PairingClient.pair(origin,code);
+   runOnUiThread(()->{if(web!=target||!origin.equals(base))return;
+    CookieManager.getInstance().setCookie(origin,cookie,ok->{if(web!=target||!origin.equals(base))return;if(Boolean.TRUE.equals(ok)){CookieManager.getInstance().flush();target.loadUrl(origin+"/");}else status.setText("Sitzung konnte nicht gespeichert werden.");});
+   });
+  }catch(Exception e){runOnUiThread(()->{if(web==target&&origin.equals(base))status.setText(e.getMessage()==null?"Kopplung fehlgeschlagen. Verbindung prüfen.":e.getMessage());});}},"SportRadar-Pairing").start();
  }
  @Override protected void onPause(){CookieManager.getInstance().flush();if(web!=null)web.onPause();super.onPause();}
  @Override protected void onResume(){super.onResume();if(web!=null)web.onResume();}
