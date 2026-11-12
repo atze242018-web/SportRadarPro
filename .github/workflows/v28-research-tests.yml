@@ -1,0 +1,21 @@
+name: V28 Research Model Tests
+on:
+  push:
+    branches:
+      - feature/v28-research-indicators
+    paths:
+      - 'research/v28/**'
+      - '.github/workflows/v28-research-tests.yml'
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Run isolated research unit tests
+        run: node --test research/v28/*.test.mjs
