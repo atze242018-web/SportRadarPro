@@ -35,7 +35,7 @@ export function deriveAnalysis(row,data,now=Date.now()){
 }
 export function buildCombos(analyses,{size=2,maxRisk=.5,buffer=.05,now=Date.now()}={}){
  if(![2,3].includes(size)||maxRisk<0||maxRisk>.5||buffer<0||buffer>.2)throw Error('Ungültige Kombi-Einstellung');
- const candidates=analyses.filter(a=>a.pick!==null&&a.probabilities&&Date.parse(a.date)>now&&now-Date.parse(a.checkedAt)<600000&&Date.parse(a.checkedAt)<=now+300000).sort((a,b)=>b.probabilities[b.pick]-a.probabilities[a.pick]).slice(0,24),out=[];
+ const candidates=analyses.filter(a=>FEEDS[a.key]?.sport!=='football'&&a.pick!==null&&a.probabilities&&Date.parse(a.date)>now&&now-Date.parse(a.checkedAt)<600000&&Date.parse(a.checkedAt)<=now+300000).sort((a,b)=>b.probabilities[b.pick]-a.probabilities[a.pick]).slice(0,24),out=[];
  function walk(start,chosen){if(chosen.length===size){const p=chosen.reduce((v,a)=>v*a.probabilities[a.pick],1),lower=chosen.reduce((v,a)=>v*Math.max(0,a.probabilities[a.pick]-buffer),1);if(1-lower<=maxRisk)out.push({legs:chosen,p,lower,risk:1-lower});return;}for(let i=start;i<candidates.length;i++){const a=candidates[i];if(chosen.some(b=>b.id===a.id||b.teams.some(t=>a.teams.some(u=>t.name===u.name))))continue;walk(i+1,[...chosen,a]);}}
  walk(0,[]);return out.sort((a,b)=>a.risk-b.risk).slice(0,3);
 }
