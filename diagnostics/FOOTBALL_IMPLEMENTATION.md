@@ -1,6 +1,6 @@
 # Fußball-Diagnose und sichere 1X2-Abgrenzung
 
-Stand: 14.11.2026. Änderungen ausschließlich im Branch `feature/football-diagnostics`; **nicht** in `main` und **nicht** auf dem Nutzergerät.
+Stand: 14.11.2026. Grundlage im Branch `feature/football-diagnostics`, geprüfte Erweiterung in `feature/forecast-evaluation-20261114`; **nicht** in `main` und **nicht** auf dem Nutzergerät.
 
 ## Im bestehenden Code verifiziert
 - `app/src/main/assets/web/multisport.mjs`: Bundesliga, Premier League und La Liga werden als `sport:'football'` geführt; die Marktregel lautet 90-Minuten-Sieger.
@@ -20,5 +20,8 @@ Stand: 14.11.2026. Änderungen ausschließlich im Branch `feature/football-diagn
 5. Erst nach bestandenem Test automatisierte **Demo**-Einzelwetten aktivieren. Keine Echtgeldanbindung.
 
 ## Tests
-`node --test diagnostics/football-diagnostics.test.mjs` prüft das neue Diagnosemodul (noch nicht ausgeführt).
-Zusätzlich vor Integration Tests für Unentschieden und `buildCombos` ergänzen.
+Am 14.11.2026 ausgeführt: `node --test diagnostics/*.test.mjs tests/*.mjs`: 69 Tests bestanden, inklusive bestehender Dreiweg-, Remis- und Kombi-Abgrenzungsprüfungen sowie vier neuer Bewertungsprüfungen. GitHub-CI ebenfalls erfolgreich. Kein Laptop-Deployment.
+
+`forecast-evaluation.mjs` bewertet eingefrorene Dreiweg-Prognosen pro Liga, prüft Training/Prognose/Anstoß/Ergebniszeit und schließt doppelte Ereignisse aus. Modell und Markt werden auf identischen Fällen mit Multiclass-Brier und Log Loss verglichen. Herkunft und Zeitstempel der Eingabedaten müssen unabhängig belegt werden. Keine automatische Auswahl, kein trainiertes Dixon-Coles-Modell und kein Profitabilitätsnachweis.
+
+Methodische Referenzen: [penaltyblog-Modelle](https://penaltyblog.readthedocs.io/en/latest/models/overview.html), [Metriken](https://penaltyblog.readthedocs.io/en/latest/metrics/), [OpenFootball CC0-Ergebnisse](https://github.com/openfootball/football.json). Kein Fremdcode oder neuer Datensatz gebündelt.

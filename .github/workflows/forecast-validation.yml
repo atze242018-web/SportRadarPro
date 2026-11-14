@@ -1,0 +1,18 @@
+name: Forecast validation
+on:
+  push:
+    branches: [feature/forecast-evaluation-20261114]
+    paths: ['diagnostics/**', 'tests/**', 'src/**', 'app/src/main/assets/web/**', '.github/workflows/forecast-validation.yml']
+  pull_request:
+    paths: ['diagnostics/**', 'tests/**', 'src/**', 'app/src/main/assets/web/**']
+permissions:
+  contents: read
+jobs:
+  offline:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: node --test diagnostics/*.test.mjs tests/*.mjs
