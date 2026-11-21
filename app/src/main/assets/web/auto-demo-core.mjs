@@ -1,7 +1,12 @@
 import {accountStats} from './demo-core.mjs';
 import {dateKey} from './multisport.mjs';
 const norm=v=>String(v||'').normalize('NFKD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/[^a-z0-9]+/g,' ').trim();
-function identities(l){const names=l.teamNames||String(l.name||'').split(' – ');return [l.id,'pair:'+l.key+':'+dateKey(new Date(l.date))+':'+names.map(norm).sort().join('|')];}
+function identities(leg){
+ const names=leg.teamNames||String(leg.name||'').split(' – ');
+ const keys=[leg.id,'pair:'+leg.key+':'+dateKey(new Date(leg.date))+':'+names.map(norm).sort().join('|')];
+ if(leg.tipicoEventId)keys.push('tipico:'+leg.tipicoEventId);
+ return keys;
+}
 export function selectAutomatic(account,candidates,now=Date.now()){
  const used=new Set(account.tickets.flatMap(t=>t.legs.flatMap(identities))),day=dateKey(new Date(now));
  const daily=account.tickets.filter(t=>t.automatic&&dateKey(new Date(t.createdAt))===day).length,open=account.tickets.filter(t=>t.result===null).length;

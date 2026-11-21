@@ -1,3 +1,5 @@
+import {FEEDS} from './multisport.mjs';
+
 export function newAccount(now=Date.now()){return {schema:'sportradar.demo.v1',id:crypto.randomUUID(),createdAt:new Date(now).toISOString(),initialCents:10000,defaultStakeCents:500,tickets:[]};}
 export function accountStats(a){let balance=a.initialCents,open=0,profit=0,settled=0,staked=0,wins=0;for(const t of a.tickets){balance-=t.stakeCents;if(t.result===null){open+=t.stakeCents;continue;}const payout=t.result==='won'?Math.round(t.stakeCents*t.odds):t.result==='void'?t.stakeCents:0;balance+=payout;profit+=payout-t.stakeCents;settled++;if(t.result!=='void'){staked+=t.stakeCents;if(t.result==='won')wins++;}}return {balance,open,profit,settled,staked,wins,roi:staked?profit/staked:null};}
 export function validateDraft(d){if(!d||!Array.isArray(d.legs)||![2,3].includes(d.legs.length)||new Set(d.legs.map(l=>l?.id)).size!==d.legs.length||d.legs.some(l=>typeof l?.id!=='string'||!l.id||typeof l.pick!=='string'||!l.pick||!Number.isFinite(Date.parse(l.date))))throw Error('Ungültige vorbereitete Kombi');return d;}
@@ -11,4 +13,28 @@ export function validateAccount(a){
 }
 export function placeTicket(a,input,now=Date.now()){validateAccount(a);if(input.modelChance!=null&&(!Number.isFinite(input.modelChance)||input.modelChance<=0||input.modelChance>=1))throw Error('Ungültige Modellchance');if(a.tickets.length>=1000)throw Error('Demokonto enthält bereits 1.000 Tipps. Bitte sichern.');const {stakeCents,legs}=input;if(!Number.isInteger(stakeCents)||stakeCents<1||stakeCents>accountStats(a).balance)throw Error('Einsatz übersteigt das verfügbare Demoguthaben.');if(!Array.isArray(legs)||![2,3].includes(legs.length)||new Set(legs.map(l=>l.id)).size!==legs.length)throw Error('Zwei oder drei verschiedene Spiele wählen.');if(legs.some(l=>!Number.isFinite(l.odds)||l.odds<=1||l.odds>1000||Date.parse(l.date)<=now||!Number.isFinite(Date.parse(l.date))||!l.pick))throw Error('Gültige Quoten und kommende Spiele erforderlich.');const odds=legs.reduce((s,l)=>s*l.odds,1);if(!Number.isFinite(odds))throw Error('Ungültige Gesamtquote');const ticket={id:crypto.randomUUID(),createdAt:new Date(now).toISOString(),stakeCents,odds,legs:structuredClone(legs),modelChance:input.modelChance??null,automatic:input.automatic===true,result:null,settledAt:null};return {...a,draft:null,tickets:[...a.tickets,ticket]};}
 export function settleTicket(a,id,result,source='manuell',now=Date.now()){if(!['won','lost','void'].includes(result))throw Error('Ungültiges Ergebnis');const t=a.tickets.find(t=>t.id===id);if(!t)throw Error('Demo-Tipp fehlt');if(t.result!==null)return a;return {...a,tickets:a.tickets.map(t=>t.id===id?{...t,result,settledAt:new Date(now).toISOString(),settlementSource:source}:t)};}
-export function legResult(leg,data,now=Date.now()){const c=data.header?.competitions?.find(c=>String(c.id)===String(leg.competitionId));if(!c||c.status?.type?.completed!==true||c.status.type.state!=='post'||Date.parse(c.date)>now)return null;const parts=c.competitors||[];if(parts.length!==2||!Array.isArray(leg.teamIds)||parts.some(p=>!leg.teamIds.includes(String(p.id))))return null;if(leg.key&&['bl1','epl','liga'].includes(leg.key)&&/overtime|shootout|penalt/i.test(c.status.type.name+' '+c.status.type.detail))return null;const chosen=parts.find(p=>String(p.id)===leg.pickId);if(!chosen)return null;const winner=parts.find(p=>p.winner===true);if(!winner)return null;return winner===chosen?'won':'lost';}
+export function legResult(leg,data,now=Date.now()){
+ const competition=data?.header?.competitions?.find(c=>String(c.id)===String(leg.competitionId));
+ const status=competition?.status?.type;
+ const start=Date.parse(competition?.date);
+ if(status?.completed!==true||status.state!=='post'||!Number.isFinite(start)||start>now)return null;
+ const parts=competition.competitors;
+ if(!Array.isArray(parts)||parts.length!==2||!Array.isArray(leg.teamIds)||leg.teamIds.length!==2)return null;
+ const ids=parts.map(p=>String(p?.id??''));
+ if(!ids.every(id=>id&&leg.teamIds.includes(id))||ids[0]===ids[1])return null;
+ const chosen=ids.indexOf(leg.pickId);
+ if(chosen===-1)return null;
+
+ if(FEEDS[leg.key]?.sport==='football'){
+  // A 90-minute team-win leg loses on a confirmed draw.
+  if(start!==Date.parse(leg.date)||Number(competition.status.period)!==2||
+   !['STATUS_FINAL','STATUS_FULL_TIME'].includes(status.name)||
+   /overtime|extra.time|shootout|penalt/i.test(status.detail??''))return null;
+  const scores=parts.map(p=>p.score);
+  if(!scores.every(score=>['number','string'].includes(typeof score)&&/^\d{1,2}$/.test(String(score))))return null;
+  return Number(scores[chosen])>Number(scores[1-chosen])?'won':'lost';
+ }
+
+ const winners=parts.filter(p=>p.winner===true);
+ return winners.length===1?(winners[0]===parts[chosen]?'won':'lost'):null;
+}

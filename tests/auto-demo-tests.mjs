@@ -14,3 +14,11 @@ test('auto controller starts real demo tickets without losing an existing manual
  try{const {createDemo}=await import('../app/src/main/assets/web/demo.mjs');const {createAutoDemo}=await import('../app/src/main/assets/web/auto-demo.mjs');const demo=createDemo({notify:()=>{},changed:()=>{}});const c=candidate(5),time=Date.now();c.legs=c.legs.map(l=>({...l,date:new Date(time+3600000).toISOString(),quoteFetchedAt:new Date(time).toISOString()}));const draft={legs:c.legs.map(l=>({...l,id:'manual:'+l.id}))};assert.equal(demo.prepare(draft),true);let scans=0;const auto=createAutoDemo({finder:{isBusy:()=>false,runAuto:async()=>{scans++;},autoTickets:()=>[c]},demo,available:()=>true,changed:()=>{},notify:()=>{}});const event={target:{closest:s=>s==='[data-auto-demo-toggle]'?{}:null}};for(const f of handlers)await f(event);for(let i=0;i<15;i++)await Promise.resolve();assert.equal(scans,1);assert.equal(demo.state().tickets.length,1);assert.equal(demo.state().tickets[0].automatic,true);assert.deepEqual(demo.state().draft,draft);assert.equal(accountStats(demo.state()).balance,9500);assert.match(auto.html(),/automatisch im Demokonto gestartet/);
  }finally{Object.assign(globalThis,old);}
 });
+
+test('the same Tipico event cannot fund two automatic combinations under different feed IDs',()=>{
+ const first=candidate(1),second=candidate(2);
+ second.legs[0].tipicoEventId=first.legs[0].tipicoEventId;
+ assert.equal(selectAutomatic(newAccount(now),[first,second],now).selected.length,1);
+ const account=placeTicket(newAccount(now),{...first,stakeCents:500},now);
+ assert.equal(selectAutomatic(account,[second],now).selected.length,0);
+});
